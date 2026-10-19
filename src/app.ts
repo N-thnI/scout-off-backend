@@ -17,7 +17,6 @@ import { responseTime } from './middleware/responseTime';
 import { stellarHealth, stellarBreaker } from './services/stellar';
 import { checkHealth } from './services/ipfs';
 import { mountGraphQL } from './graphql';
-import { createPersistedOperationsPlugin, loadPersistedOperationsFromFile } from './graphql/persisted-operations';
 import { ErrorCode } from './utils/errorCodes';
 import { metricsMiddleware, createMetricsHandler } from './middleware/metrics';
 import { ipReputationMiddleware } from './middleware/ipReputation';

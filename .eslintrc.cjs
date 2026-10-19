@@ -27,6 +27,14 @@ module.exports = {
   },
   overrides: [
     {
+      // Catch dead imports and variables in application code. Prefix
+      // intentionally unused parameters (e.g. Express `next`) with `_`.
+      files: ['src/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true }]
+      }
+    },
+    {
       // logger.ts also uses console.debug/console.info, which the base
       // allowlist (warn/error only) doesn't cover.
       files: ['src/utils/logger.ts'],

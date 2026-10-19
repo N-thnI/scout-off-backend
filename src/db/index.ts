@@ -1,6 +1,5 @@
 import type Database from 'better-sqlite3';
 import crypto from 'crypto';
-import { trace, SpanStatusCode } from '@opentelemetry/api';
 import config from '../config';
 import { EventRecord, ContractEventType } from '../types';
 import { EVENTS_ORDER_BY_SQL } from '../services/eventOrdering';
@@ -12,35 +11,11 @@ import { decryptField, encryptField } from '../utils/fieldCipher';
 import { DbDriver } from './driver';
 import { SqliteDriver } from './sqlite-driver';
 import { PostgresDriver } from './postgres-driver';
-import { observeDbQueryDuration } from '../middleware/metrics';
 import {
   createBetterSqlite3LoadError,
   isBetterSqlite3LoadFailure,
 } from './betterSqlite3Error';
 import { ApiKeyLimitError, MAX_API_KEYS_PER_SCOUT, MAX_WEBHOOK_SUBSCRIPTIONS_PER_SCOUT, WebhookSubscriptionLimitError } from '../utils/scoutResourceLimits';
-
-const dbTracer = trace.getTracer('scout-off-backend');
-
-/**
- * Thin wrapper that creates a DB span, runs fn(), sets ipfs.cid on success,
- * records exception and ERROR status on throw. Zero-cost when OTEL is not
- * configured (noop tracer).
- */
-function withDbSpan<T>(name: string, sql: string, fn: () => T): T {
-  const span = dbTracer.startSpan(`db.${name}`, {
-    attributes: { 'db.system': 'sqlite', 'db.statement': sql.slice(0, 200) },
-  });
-  try {
-    const result = fn();
-    span.end();
-    return result;
-  } catch (err) {
-    span.recordException(err as Error);
-    span.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
-    span.end();
-    throw err;
-  }
-}
 
 function slowQueryThresholdMs(): number {
   return parseInt(process.env.SLOW_QUERY_THRESHOLD_MS ?? '50', 10);
@@ -1278,7 +1253,7 @@ function processCursorResults(
   rows: (PlayerRow | ScoredPlayerRow)[],
   limit: number,
   sortBy: string,
-  sortOrder: string,
+  _sortOrder: string,
 ): SearchPlayersResult {
   const hasMore = rows.length > limit;
   const data = hasMore ? rows.slice(0, limit) : rows;
