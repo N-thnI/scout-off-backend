@@ -1,5 +1,16 @@
 import dotenv from 'dotenv';
-dotenv.config();
+
+// In production and staging, configuration must come only from the
+// orchestrator (ConfigMap/Secrets). A stray .env baked into an image or
+// mounted volume would otherwise silently fill in unset values, possibly with
+// development secrets. Set DOTENV_ENABLED=true to opt back in explicitly.
+const dotenvEnv = process.env.NODE_ENV ?? 'development';
+if ((dotenvEnv !== 'production' && dotenvEnv !== 'staging') || process.env.DOTENV_ENABLED === 'true') {
+  const result = dotenv.config();
+  if (!result.error) console.info('[config] loaded .env file');
+} else {
+  console.info(`[config] skipping .env file (NODE_ENV=${dotenvEnv}; set DOTENV_ENABLED=true to load it)`);
+}
 
 function required(name: string): string {
   const value = process.env[name];

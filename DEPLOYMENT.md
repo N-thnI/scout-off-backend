@@ -26,6 +26,12 @@ This mismatch will be enforced by a startup check in a future release; for now i
 
 Copy `.env.example` to `.env` and fill in all required values before starting the server.
 
+### `.env` loading in production and staging
+
+The `.env` file is a **local development** convenience. When `NODE_ENV` is `production` or `staging`, the server does **not** load `.env`, and logs `[config] skipping .env file` at startup. Configuration must come from the orchestrator (Kubernetes ConfigMap/Secrets, Compose `environment:`, and so on). This stops a `.env` that ends up in an image or mounted volume from quietly supplying defaults, such as development secrets, for anything the orchestrator doesn't set.
+
+To opt back in explicitly (for example a single-host deployment that keeps its configuration in a `.env` file), set `DOTENV_ENABLED=true` in the real environment. Startup then logs `[config] loaded .env file`. In development and test, `.env` is loaded as before. `.dockerignore` also excludes `.env` and `.env.*` (except `.env.example`) from the build context.
+
 > [!NOTE]
 > For instructions and policies on managing, securing, and rotating long-lived secrets (such as JWT secrets, Pinata credentials, and platform signing keys), see the [Secrets Rotation Policy](docs/secrets-rotation.md).
 
